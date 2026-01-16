@@ -435,13 +435,6 @@ local MiscTab = Window:Tab({
     Icon = "layers"
 })
 
-local ServerTab = Window:Tab({
-    Title = "Server",
-    Icon = "server"
-})
-
-
-
 MainTab:Section(
     {
         Title = "Player Modifier:"
@@ -1981,76 +1974,118 @@ CarTab:Toggle({
     end
 })
 
+local ServerTab = Window:Tab({
+    Title = "Server",
+    Icon = "server"
+})
+
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
-local LP = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer
 
+-- แสดง
 local function GetJobID()
-    return game.JobId ~= "" and game.JobId or "Unknown"
+    return (game.JobId and game.JobId ~= "") and game.JobId or "Unknown"
 end
 
 ServerTab:Label({
-    Text = "Current Server:\n" .. GetJobID()
+    Text = "Current Server JobId:\n" .. GetJobID()
 })
 
 ServerTab:Divider()
 
-ServerTab:Section({ Title = "Server Utilities:" })
+ServerTab:Section({
+    Title = "Server Utilities"
+})
 
 local ServerCode = ""
 
 ServerTab:Input({
-    Title = "Enter Server Code",
-    Placeholder = "Paste server JobId here...",
+    Title = "Enter Server JobId",
+    Placeholder = "Paste JobId here...",
     Callback = function(Value)
         ServerCode = Value
     end
 })
 
+-- Join Server
 ServerTab:Button({
-    Title = "Join Code",
+    Title = "Join Server (JobId)",
     Callback = function()
-        if ServerCode == "" then
-            warn("ใส่job")
-            return
+        local ok, err = pcall(function()
+            if ServerCode == "" then
+                warn("กรุณาใส่ JobId")
+                return
+            end
+            TeleportService:TeleportToPlaceInstance(
+                game.PlaceId,
+                ServerCode,
+                LocalPlayer
+            )
+        end)
+        if not ok then
+            warn("Join Server Error:", err)
         end
-        TeleportService:TeleportToPlaceInstance(game.PlaceId, ServerCode, LP)
     end
 })
 
+-- Rejoin
 ServerTab:Button({
-    Title = "Rejoin",
+    Title = "Rejoin Server",
     Callback = function()
-        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LP)
+        local ok, err = pcall(function()
+            TeleportService:TeleportToPlaceInstance(
+                game.PlaceId,
+                game.JobId,
+                LocalPlayer
+            )
+        end)
+        if not ok then
+            warn("Rejoin Error:", err)
+        end
     end
 })
 
+-- Hop Server
 ServerTab:Button({
     Title = "Hop Server (Low Player)",
     Callback = function()
-        local servers = {}
-        local url = string.format(
-            "https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100",
-            game.PlaceId
-        )
-
-        local data = HttpService:JSONDecode(HttpService:GetAsync(url))
-
-        for _, v in pairs(data.data or {}) do
-            if v.playing < v.maxPlayers then
-                table.insert(servers, v.id)
-            end
-        end
-
-        if #servers > 0 then
-            TeleportService:TeleportToPlaceInstance(
-                game.PlaceId,
-                servers[math.random(#servers)],
-                LP
+        local ok, err = pcall(function()
+            local url = string.format(
+                "https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100",
+                game.PlaceId
             )
-        else
-            warn("ไม่มี server ว่าง")
+
+            local response
+            if game.HttpGet then
+                response = game:HttpGet(url)
+            else
+                response = HttpService:GetAsync(url)
+            end
+
+            local data = HttpService:JSONDecode(response)
+            local servers = {}
+
+            for _, v in pairs(data.data or {}) do
+                if v.playing < v.maxPlayers then
+                    table.insert(servers, v.id)
+                end
+            end
+
+            if #servers > 0 then
+                TeleportService:TeleportToPlaceInstance(
+                    game.PlaceId,
+                    servers[math.random(1, #servers)],
+                    LocalPlayer
+                )
+            else
+                warn("ไม่พบ Server ว่าง")
+            end
+        end)
+
+        if not ok then
+            warn("Hop Server Error:", err)
         end
     end
 })
