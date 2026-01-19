@@ -2013,7 +2013,7 @@ local function createItemESP(item)
     if basePart then
         local bb = Instance.new("BillboardGui")
         bb.Adornee = basePart
-        bb.Size = UDim2.new(0, 55, 0, 9) 
+        bb.Size = UDim2.new(0, 55, 0, 9)
         bb.StudsOffset = Vector3.new(0, basePart.Size.Y/2 + 0.6, 0)
         bb.AlwaysOnTop = true
         bb.Parent = basePart
@@ -2024,7 +2024,7 @@ local function createItemESP(item)
         label.Text = "[" .. item.Name .. "]"
         label.Font = Enum.Font.GothamBold
         label.TextScaled = false
-        label.TextSize = 8 -- 
+        label.TextSize = 8 
         label.TextColor3 = color
         label.TextStrokeTransparency = 0.5
         label.Visible = true
@@ -2037,7 +2037,6 @@ local function createItemESP(item)
     }
 end
 
--
 local function removeItemESP(item)
     local data = ItemESPs[item]
     if not data then return end
